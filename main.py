@@ -1,5 +1,10 @@
 import pandas as pd
 import os
+import altair as alt
+import panel as pn
+#from vega_datasets import data
+
+pn.extension('vega')
 
 # Constants 
 IMPORT_PATHS = {
@@ -28,6 +33,9 @@ COLS_TO_KEEP = [
     'Addtl Incent'
 ]
 
+# Variables
+update_bool = False
+
 # Functions
 def import_dataset(path, export_name):
     raw = pd.read_excel(path, sheet_name='Raw Data', header= 3)
@@ -53,13 +61,30 @@ def combine_dataset():
 
     df_concat.to_csv('Data/Combined/Combined data.txt', index=False)
 
+if update_bool == True:
 
-# Import and combine datasets
-for entry in IMPORT_PATHS:
-    import_dataset(IMPORT_PATHS[entry], entry)
+    # Import and combine datasets
+    for entry in IMPORT_PATHS:
+        import_dataset(IMPORT_PATHS[entry], entry)
 
-combine_dataset()
+    combine_dataset()
 
-data = pd.read_csv('Data/Combined/Combined data.txt')
-    
-print(data)
+# Load data and sort by date
+data = pd.read_csv('Data/Combined/Combined data.txt')   
+data['Contract Date'] = pd.to_datetime(data['Contract Date'])
+data.sort_values(by='Contract Date')
+
+
+#print(data)
+
+base = alt.Chart(data).mark_point().encode(
+    x='Contract Date',
+    y='Net Sale',
+    color='Product',
+).properties(
+    height=500,
+    width=500
+).interactive()
+
+altair_pane = pn.panel(base)
+altair_pane
